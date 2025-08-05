@@ -1,42 +1,32 @@
-import { useEffect, useState } from 'react';
+import xml2js from 'xml2js';
 
-export default function Home() {
-  const [news, setNews] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default async function handler(req, res) {
+  const RSS_URL = 'https://www.pagina12.com.ar/rss/secciones/economia/notas';
 
-  const fetchNews = async () => {
-    try {
-      const res = await fetch('/api/news');
-      const data = await res.json();
-      setNews(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  try {
+    const response = await fetch(RSS_URL, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AcmeBot/1.0)' }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
-  };
 
-  useEffect(() => {
-    fetchNews();
-    const interval = setInterval(fetchNews, 60000);
-    return () => clearInterval(interval);
-  }, []);
+    const xmlText = await response.text();
+    const parser = new xml2js.Parser();
+    const result = await parser.parseStringPromise(xmlText);
 
-  if (loading) return <p>Cargando noticias...</p>;
+    const items = (result.rss?.channel?.[0]?.item || []).map(item => ({
+      title:   item.title[0],
+      link:    item.link[0],
+      pubDate: item.pubDate[0]
+    }));
 
-  return (
-    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: 800, margin: 'auto', padding: 20 }}>
-      <h1>Noticias de Economía</h1>
-      {news.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 16 }}>
-          <a href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#333', fontSize: '1.1em' }}>
-            {item.title}
-          </a>
-          <div style={{ fontSize: '0.9em', color: '#666' }}>
-            {new Date(item.pubDate).toLocaleString('es-AR')}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+    // Vercel cache: revalida cada 60 segundos
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
+    res.status(200).json(items);
+
+  } catch (err) {
+    console.error('API /api/news error:', err);
+    res.status(500).json({ error: err.message });
+  }
 }
