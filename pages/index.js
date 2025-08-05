@@ -10,7 +10,7 @@ export default function Home() {
       const data = await res.json();
       setNews(data);
     } catch (err) {
-      console.error(err);
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -18,21 +18,37 @@ export default function Home() {
 
   useEffect(() => {
     fetchNews();
-    const interval = setInterval(fetchNews, 60000);
+    const interval = setInterval(fetchNews, 60_000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <p>Cargando noticias...</p>;
+  if (loading) {
+    return <p style={{ textAlign: 'center', marginTop: 50 }}>Cargando noticias…</p>;
+  }
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: 800, margin: 'auto', padding: 20 }}>
-      <h1>Noticias de Economía</h1>
-      {news.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 16 }}>
-          <a href={item.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#333', fontSize: '1.1em' }}>
+    <div style={{
+      maxWidth: 800,
+      margin: '40px auto',
+      padding: '0 20px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <h1 style={{ textAlign: 'center' }}>Noticias de Economía</h1>
+      {news.map((item, i) => (
+        <div key={i} style={{ marginBottom: 24 }}>
+          <a
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: '1.1em',
+              color: '#333',
+              textDecoration: 'none'
+            }}
+          >
             {item.title}
           </a>
-          <div style={{ fontSize: '0.9em', color: '#666' }}>
+          <div style={{ fontSize: '0.9em', color: '#666', marginTop: 4 }}>
             {new Date(item.pubDate).toLocaleString('es-AR')}
           </div>
         </div>
