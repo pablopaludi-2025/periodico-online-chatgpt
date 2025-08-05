@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 export default function Home() {
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [expandedIdx, setExpandedIdx] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchNews = async () => {
@@ -13,9 +13,8 @@ export default function Home() {
       const res = await fetch('/api/news')
       const items = await res.json()
       setNews(items)
-      setLastUpdated(new Date())
     } catch (e) {
-      console.error(e)
+      console.error('Fetch error:', e)
     }
     setLoading(false)
   }
@@ -26,14 +25,11 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [])
 
-  const formatDate = (str) =>
+  const formatDate = str =>
     new Date(str).toLocaleDateString('es-ES', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     })
-
-  const openUrl = (url) =>
-    window.open(url, '_blank', 'noopener,noreferrer')
 
   const filtered = news.filter(item =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -48,12 +44,12 @@ export default function Home() {
       <style jsx global>{`
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height:1.6; color:#333; background:#f8f9fa;
+          font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background:#f8f9fa; color:#333; line-height:1.6;
         }
         .header {
           background: linear-gradient(135deg,#1e3c72,#2a5298);
-          color:white; padding:1rem 0; box-shadow:0 2px 10px rgba(0,0,0,.1);
+          color:#fff; padding:1rem 0; box-shadow:0 2px 10px rgba(0,0,0,.1);
         }
         .container { max-width:1200px; margin:0 auto; padding:0 20px; }
         .header-content {
@@ -68,7 +64,7 @@ export default function Home() {
           min-width:300px; font-size:14px;
         }
         .search-btn {
-          padding:10px 20px; background:#ff6b35; color:white;
+          padding:10px 20px; background:#ff6b35; color:#fff;
           border:none; border-radius:25px; cursor:pointer;
           transition:background .3s;
         }
@@ -89,7 +85,7 @@ export default function Home() {
           font-weight:500;
         }
         .nav-item.active, .nav-item:hover {
-          background:#2a5298; color:white; transform:translateY(-2px);
+          background:#2a5298; color:#fff; transform:translateY(-2px);
         }
         .main-content {
           display:grid;
@@ -98,7 +94,7 @@ export default function Home() {
           max-width:1200px; padding:0 20px;
         }
         .news-section {
-          background:white; border-radius:10px;
+          background:#fff; border-radius:10px;
           padding:25px; box-shadow:0 5px 15px rgba(0,0,0,.1);
         }
         .section-title {
@@ -106,13 +102,10 @@ export default function Home() {
           margin-bottom:20px; padding-bottom:10px;
           border-bottom:3px solid #ff6b35;
         }
-        .news-grid {
-          display:grid; gap:20px;
-        }
         .news-item {
           border:1px solid #e9ecef; border-radius:8px;
           padding:20px; background:#fff;
-          transition:all .3s; overflow:hidden;
+          transition:all .3s; overflow:hidden; margin-bottom:20px;
         }
         .news-item:hover {
           box-shadow:0 5px 15px rgba(0,0,0,.1);
@@ -125,35 +118,41 @@ export default function Home() {
         .news-source {
           background:#e3f2fd; color:#1976d2;
           padding:3px 8px; border-radius:12px;
-          font-size:.8rem; cursor:pointer;
-          transition:all .3s; display:inline-block;
+          font-size:.8rem; cursor:pointer; display:inline-block;
+          transition:all .3s;
         }
         .news-source:hover {
-          background:#1976d2; color:white;
+          background:#1976d2; color:#fff;
           transform:translateY(-1px);
           box-shadow:0 2px 5px rgba(25,118,210,.3);
         }
         .news-title {
           font-size:1.2rem; font-weight:bold;
-          color:#2a5298; margin-bottom:8px;
-          cursor:pointer;
+          color:#2a5298; margin-bottom:8px; cursor:pointer;
         }
         .news-title:hover { color:#ff6b35; }
+        .news-summary {
+          margin-bottom:12px; color:#444;
+        }
+        .news-content {
+          margin-bottom:12px;
+        }
+        .source-link {
+          font-size:.9rem; color:#1976d2; text-decoration:none;
+        }
         .loading, .error-message {
-          text-align:center; padding:20px;
-          color:#666;
+          text-align:center; padding:20px; color:#666;
         }
         .sidebar {
           display:flex; flex-direction:column; gap:20px;
         }
         .widget {
-          background:white; border-radius:10px;
+          background:#fff; border-radius:10px;
           padding:20px; box-shadow:0 5px 15px rgba(0,0,0,.1);
         }
         .widget-title {
           font-size:1.3rem; color:#2a5298;
-          margin-bottom:15px;
-          padding-bottom:8px;
+          margin-bottom:15px; padding-bottom:8px;
           border-bottom:2px solid #ff6b35;
         }
         @media(max-width:768px){
@@ -199,31 +198,49 @@ export default function Home() {
           {loading ? (
             <div className="loading">Cargando noticias...</div>
           ) : filtered.length === 0 ? (
-            <div className="error-message">
-              No se encontraron noticias.
-            </div>
+            <div className="error-message">No se encontraron noticias.</div>
           ) : (
-            <div className="news-grid">
-              {filtered.map((item, i) => (
-                <article className="news-item" key={i}>
-                  <div className="news-meta">
-                    <span
-                      className="news-source"
-                      onClick={() => openUrl(item.link)}
-                    >
-                      Página12
-                    </span>
-                    <span>{formatDate(item.pubDate)}</span>
-                  </div>
-                  <h3
-                    className="news-title"
-                    onClick={() => openUrl(item.link)}
+            filtered.map((item, i) => (
+              <article className="news-item" key={i}>
+                <div className="news-meta">
+                  <span
+                    className="news-source"
+                    onClick={() => window.open(item.link, '_blank')}
                   >
-                    {item.title}
-                  </h3>
-                </article>
-              ))}
-            </div>
+                    {item.source}
+                  </span>
+                  <span>{formatDate(item.pubDate)}</span>
+                </div>
+
+                <h3
+                  className="news-title"
+                  onClick={() =>
+                    setExpandedIdx(expandedIdx === i ? null : i)
+                  }
+                >
+                  {item.title}
+                </h3>
+
+                <div className="news-summary" 
+                     dangerouslySetInnerHTML={{ __html: item.summary }} />
+
+                {expandedIdx === i && (
+                  <div className="news-content">
+                    <div
+                      dangerouslySetInnerHTML={{ __html: item.content }}
+                    />
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="source-link"
+                    >
+                      Fuente: {item.source}
+                    </a>
+                  </div>
+                )}
+              </article>
+            ))
           )}
         </main>
 
@@ -231,15 +248,13 @@ export default function Home() {
           <div className="widget">
             <h3 className="widget-title">Última Actualización</h3>
             <div>
-              {lastUpdated
-                ? lastUpdated.toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
-                : '—'}
+              {new Date().toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </div>
           </div>
         </aside>
