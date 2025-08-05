@@ -1,3 +1,4 @@
+// pages/api/news.js
 import xml2js from 'xml2js';
 
 const RSS_SOURCES = [
@@ -20,8 +21,8 @@ export default async function handler(req, res) {
   const parser = new xml2js.Parser();
 
   try {
-    // 1) Para cada feed, bajar y parsear
-    const allFeeds = await Promise.all(RSS_SOURCES.map(async ({ url, source }) => {
+    // 1) Bajar y parsear cada feed
+    const feeds = await Promise.all(RSS_SOURCES.map(async ({ url, source }) => {
       const resp = await fetch(url, { headers: { 'User-Agent': UA } });
       if (!resp.ok) throw new Error(`HTTP ${resp.status} en ${url}`);
       const xmlText = await resp.text();
@@ -37,8 +38,8 @@ export default async function handler(req, res) {
       }));
     }));
 
-    // 2) Aplanar, ordenar por fecha descendente y devolver
-    const allItems = allFeeds.flat().sort((a, b) =>
+    // 2) Aplanar y ordenar por fecha descendente
+    const allItems = feeds.flat().sort((a, b) =>
       new Date(b.pubDate) - new Date(a.pubDate)
     );
 
