@@ -20,6 +20,7 @@ export default async function handler(req, res) {
       source:  'Página12'
     }));
 
+    // Cache en Vercel: revalida cada 60 s
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
     res.status(200).json(news);
 
