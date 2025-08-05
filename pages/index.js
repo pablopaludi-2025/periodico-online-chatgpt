@@ -2,15 +2,15 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const [news, setNews]     = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [news, setNews]         = useState([]);
+  const [loading, setLoading]   = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchNews = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/news');
+        const res  = await fetch('/api/news');
         const data = await res.json();
         setNews(data);
       } catch (e) {
@@ -52,6 +52,7 @@ export default function Home() {
           box-shadow:0 2px 10px rgba(0,0,0,.1);
         }
         .header h1 { margin:0; font-size:2rem; }
+        .header p { margin-top:4px; opacity:.9; }
         .search-bar {
           display:flex; justify-content:center; margin:20px 0;
         }
@@ -75,11 +76,11 @@ export default function Home() {
         .news-meta span + span { margin-left:15px }
         .news-title {
           font-size:1.3rem; color:#2a5298; text-decoration:none;
-          cursor:pointer;
+          display:inline-block; margin-bottom:12px;
         }
         .news-title:hover { color:#ff6b35; }
         .news-summary {
-          margin:12px 0; color:#444;
+          margin-bottom:12px; color:#444;
         }
         .news-source-link {
           font-size:.9rem; color:#1976d2; text-decoration:none;
